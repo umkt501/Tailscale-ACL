@@ -1,0 +1,88 @@
+{
+	//"groups": {
+	//},
+
+	"tagOwners": {
+		// all Tailscale admins can manage which devices are tagged tag:corp and tag:prod
+		"tag:corp": ["autogroup:admin"],
+		"tag:prod": ["autogroup:admin"],
+		// users who are Tailscale admins can apply the tag tag:application-exit-node
+		"tag:application-exit-node": ["autogroup:admin"],
+	},
+
+	"autoApprovers": {
+		// exit nodes advertised by users who are Tailscale admins or devices tagged
+		// tag:application-exit-node will be automatically approved
+		"exitNode": ["tag:application-exit-node", "autogroup:admin"],
+	},
+
+	// Define access control lists for users, groups, autogroups, tags,
+	// Tailscale IP addresses, and subnet ranges.
+	"acls": [
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"],
+			"dst":    ["autogroup:self:*"],
+		},
+		// all employees can access devices tagged tag:corp
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"],
+			"dst":    ["tag:corp:*"],
+		},
+		// all Tailscale admins can access devices tagged tag:prod
+		{
+			"action": "accept",
+			"src":    ["autogroup:admin"],
+			"dst":    ["tag:prod:*"],
+		},
+		// users who are Tailscale admins can access devices tagged tag:application-exit-node
+		{
+			"action": "accept",
+			"src":    ["autogroup:admin"],
+			"dst":    ["tag:application-exit-node:*"],
+		},
+		// all employees can use exit nodes
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"],
+			"dst":    ["autogroup:internet:*"],
+		},
+		// Add the new entry to allow access to the subnet 192.168.4.0/24
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"],
+			"dst":    ["192.168.4.0/24:*"],
+		},
+	],
+
+	// Define users and devices that can use Tailscale SSH.
+	"ssh": [
+		// Allow all users to SSH into their own devices in check mode.
+		// Comment this section out if you want to define specific restrictions.
+		{
+			"action": "check",
+			"src":    ["autogroup:member"],
+			"dst":    ["autogroup:self"],
+			"users":  ["autogroup:nonroot", "root"],
+		},
+	],
+	"nodeAttrs": [
+		{
+			// Funnel policy, which lets tailnet members control Funnel
+			// for their own devices.
+			// Learn more at https://tailscale.com/kb/1223/tailscale-funnel/
+			"target": ["autogroup:member"],
+			"attr":   ["funnel"],
+		},
+	],
+
+	// Test access rules every time they're saved.
+	// "tests": [
+	//  	{
+	//  		"src": "alice@example.com",
+	//  		"accept": ["tag:example"],
+	//  		"deny": ["100.101.102.103:443"],
+	//  	},
+	// ],
+}
